@@ -34,7 +34,6 @@ TOPIC_EVENTS = {
 class PushListener:
     def __init__(self, event: desertbus.Event) -> None:
         self.event = event
-        self.phxsocket = phxsocket.Client(constants.WEBSOCKET_URL)
         self._auction_cbs: set[AuctionCallbackType] = set()
         self._blog_cbs: set[BlogCallbackType] = set()
         self._donation_cbs: set[DonationCallbackType] = set()
@@ -54,6 +53,7 @@ class PushListener:
             ListenTopics.TOTAL,
         },
     ):
+        self.phxsocket = phxsocket.Client(constants.WEBSOCKET_URL)
         if not self.phxsocket.connect():
             raise RuntimeError("Could not connect phoenix channel socket")
         for key, handler in self.TOPIC_HANDLER_MAP.items():
