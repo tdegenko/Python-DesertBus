@@ -66,6 +66,9 @@ class PushListener:
             if response is not None:
                 handler(response)
 
+    def teardown(self):
+        self.phxsocket.close()
+
     def subscribe_auction(
         self, callback: AuctionCallbackType
     ) -> None:
@@ -187,7 +190,6 @@ class PushListener:
     def _handle_total(self, message: phxsocket.Message) -> None:
         if not self._total_cbs:
             return
-        print(message)
         total = data_types.Total.from_json(message)
         for cb in self._total_cbs:
             cb(total)
