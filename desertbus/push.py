@@ -31,9 +31,16 @@ TOPIC_EVENTS = {
 }
 
 
+class PHXClient(phxsocket.Client):
+    @property
+    def connected(self):
+        return self._loop is not None
+
+
 class PushListener:
     def __init__(self, event: desertbus.Event) -> None:
         self.event = event
+        self.phxsocket = None
         self._auction_cbs: set[AuctionCallbackType] = set()
         self._blog_cbs: set[BlogCallbackType] = set()
         self._donation_cbs: set[DonationCallbackType] = set()
@@ -53,7 +60,7 @@ class PushListener:
             ListenTopics.TOTAL,
         },
     ):
-        self.phxsocket = phxsocket.Client(constants.WEBSOCKET_URL)
+        self.phxsocket = PHXClient(constants.WEBSOCKET_URL)
         if not self.phxsocket.connect():
             raise RuntimeError("Could not connect phoenix channel socket")
         for key, handler in self.TOPIC_HANDLER_MAP.items():
@@ -69,14 +76,16 @@ class PushListener:
     def teardown(self):
         self.phxsocket.close()
 
-    def subscribe_auction(
-        self, callback: AuctionCallbackType
-    ) -> None:
+    @property
+    def connected(self):
+        if self.phxsocket is None:
+            return False
+        return self.phxsocket.connected
+
+    def subscribe_auction(self, callback: AuctionCallbackType) -> None:
         self._auction_cbs.add(callback)
 
-    def unsubscribe_auction(
-        self, callback: AuctionCallbackType
-    ) -> bool:
+    def unsubscribe_auction(self, callback: AuctionCallbackType) -> bool:
         if callback in self._auction_cbs:
             return False
         self._auction_cbs.remove(callback)
@@ -87,32 +96,22 @@ class PushListener:
     ) -> set[AuctionCallbackType]:
         return self._auction_cbs
 
-    def subscribe_blog(
-        self, callback: BlogCallbackType
-    ) -> None:
+    def subscribe_blog(self, callback: BlogCallbackType) -> None:
         self._blog_cbs.add(callback)
 
-    def unsubscribe_blog(
-        self, callback: BlogCallbackType
-    ) -> bool:
+    def unsubscribe_blog(self, callback: BlogCallbackType) -> bool:
         if callback in self._blog_cbs:
             return False
         self._blog_cbs.remove(callback)
         return True
 
-    def get_callbacks_blog(
-        self, callback: BlogCallbackType
-    ) -> set[BlogCallbackType]:
+    def get_callbacks_blog(self, callback: BlogCallbackType) -> set[BlogCallbackType]:
         return self._blog_cbs
 
-    def subscribe_donation(
-        self, callback: DonationCallbackType
-    ) -> None:
+    def subscribe_donation(self, callback: DonationCallbackType) -> None:
         self._donation_cbs.add(callback)
 
-    def unsubscribe_donation(
-        self, callback: DonationCallbackType
-    ) -> bool:
+    def unsubscribe_donation(self, callback: DonationCallbackType) -> bool:
         if callback in self._donation_cbs:
             return False
         self._donation_cbs.remove(callback)
@@ -123,14 +122,10 @@ class PushListener:
     ) -> set[DonationCallbackType]:
         return self._donation_cbs
 
-    def subscribe_prize(
-        self, callback: PrizeCallbackType
-    ) -> None:
+    def subscribe_prize(self, callback: PrizeCallbackType) -> None:
         self._prize_cbs.add(callback)
 
-    def unsubscribe_prize(
-        self, callback: PrizeCallbackType
-    ) -> bool:
+    def unsubscribe_prize(self, callback: PrizeCallbackType) -> bool:
         if callback in self._prize_cbs:
             return False
         self._prize_cbs.remove(callback)
@@ -141,14 +136,10 @@ class PushListener:
     ) -> set[PrizeCallbackType]:
         return self._prize_cbs
 
-    def subscribe_total(
-        self, callback: TotalCallbackType
-    ) -> None:
+    def subscribe_total(self, callback: TotalCallbackType) -> None:
         self._total_cbs.add(callback)
 
-    def unsubscribe_total(
-        self, callback: TotalCallbackType
-    ) -> bool:
+    def unsubscribe_total(self, callback: TotalCallbackType) -> bool:
         if callback in self._total_cbs:
             return False
         self._total_cbs.remove(callback)

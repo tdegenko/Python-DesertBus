@@ -1,6 +1,6 @@
 [project]
 name = "desertbus"
-version = "0.0.0-alpha"
+version = "0.0.0-alpha.1"
 dependencies = [
     "phxsocket==0.1.5"
 ]
