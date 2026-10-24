@@ -40,7 +40,7 @@ class PHXClient(phxsocket.Client):
 class PushListener:
     def __init__(self, event: desertbus.Event) -> None:
         self.event = event
-        self.phxsocket = None
+        self.phxsocket: None | PHXClient = None
         self._auction_cbs: set[AuctionCallbackType] = set()
         self._blog_cbs: set[BlogCallbackType] = set()
         self._donation_cbs: set[DonationCallbackType] = set()
@@ -74,7 +74,8 @@ class PushListener:
                 handler(response)
 
     def teardown(self):
-        self.phxsocket.close()
+        if self.connected:
+            self.phxsocket.close()
 
     @property
     def connected(self):
